@@ -21,6 +21,7 @@ import {
   ZAxis,
 } from "recharts";
 import { hotels, negotiationRounds, pipelineData, productionTrend, regionalPerformance } from "@/data/sourcing-data";
+import type { NormalizedSourceRecord, ReconciledRuntimeHotel, SourceName } from "@/types/sourcing";
 
 const tooltipStyle = { background: "#111821", border: "1px solid rgba(255,255,255,.1)", borderRadius: 14, color: "#f8fafc", fontSize: 12 };
 const axis = { fill: "#64748b", fontSize: 10 };
@@ -58,4 +59,25 @@ export function NegotiationChart() {
 export function LeverageScatterChart() {
   const data = hotels.map((hotel) => ({ name: hotel.airport, variance: Number((((hotel.currentRate - hotel.marketBenchmark) / hotel.marketBenchmark) * 100).toFixed(1)), roomNights: hotel.roomNights, score: hotel.commercialScore }));
   return <div className="h-[310px] w-full"><ResponsiveContainer width="100%" height="100%"><ScatterChart margin={{ top: 8, right: 18, left: -10, bottom: 10 }}><CartesianGrid stroke="rgba(255,255,255,.05)" /><XAxis type="number" dataKey="variance" name="Rate variance" unit="%" tick={axis} axisLine={false} /><YAxis type="number" dataKey="roomNights" name="Room nights" tick={axis} axisLine={false} /><ZAxis type="number" dataKey="score" range={[80, 420]} /><Tooltip contentStyle={tooltipStyle} cursor={{ strokeDasharray: "3 3" }} /><Scatter name="Hotel leverage" data={data} fill="#ef2b32" /></ScatterChart></ResponsiveContainer></div>;
+}
+
+export function RuntimeSourceChart({ records }: { records: NormalizedSourceRecord[] }) {
+  const colors: Record<SourceName, string> = { SharePoint: "#ef2b32", Cvent: "#f59e0b", StormX: "#38bdf8" };
+  const data = (["SharePoint", "Cvent", "StormX"] as SourceName[]).map((source) => ({ source, records: records.filter((record) => record.source === source).length, color: colors[source] }));
+  return <div className="h-[260px] w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={data} margin={{ top: 12, right: 8, left: -22, bottom: 0 }}><CartesianGrid stroke="rgba(255,255,255,.05)" vertical={false} /><XAxis dataKey="source" tick={axis} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={axis} axisLine={false} tickLine={false} /><Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(255,255,255,.035)" }} /><Bar dataKey="records" name="Runtime rows" radius={[7, 7, 0, 0]}>{data.map((item) => <Cell key={item.source} fill={item.color} />)}</Bar></BarChart></ResponsiveContainer></div>;
+}
+
+export function RuntimePolicyChart({ hotels: runtimeHotels }: { hotels: ReconciledRuntimeHotel[] }) {
+  const data = [
+    { term: "Commission", compliant: runtimeHotels.filter((hotel) => hotel.commission !== null && hotel.commission >= 10).length, nonCompliant: runtimeHotels.filter((hotel) => hotel.commission !== null && hotel.commission < 10).length, missing: runtimeHotels.filter((hotel) => hotel.commission === null).length },
+    { term: "Breakfast", compliant: runtimeHotels.filter((hotel) => hotel.breakfast === true).length, nonCompliant: runtimeHotels.filter((hotel) => hotel.breakfast === false).length, missing: runtimeHotels.filter((hotel) => hotel.breakfast === null).length },
+    { term: "LRA", compliant: runtimeHotels.filter((hotel) => hotel.lra === true).length, nonCompliant: runtimeHotels.filter((hotel) => hotel.lra === false).length, missing: runtimeHotels.filter((hotel) => hotel.lra === null).length },
+    { term: "VCC", compliant: runtimeHotels.filter((hotel) => hotel.vcc === true).length, nonCompliant: runtimeHotels.filter((hotel) => hotel.vcc === false).length, missing: runtimeHotels.filter((hotel) => hotel.vcc === null).length },
+  ];
+  return <div className="h-[260px] w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={data} margin={{ top: 12, right: 8, left: -22, bottom: 0 }}><CartesianGrid stroke="rgba(255,255,255,.05)" vertical={false} /><XAxis dataKey="term" tick={axis} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={axis} axisLine={false} tickLine={false} /><Tooltip contentStyle={tooltipStyle} /><Legend iconType="circle" wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} /><Bar stackId="policy" dataKey="compliant" name="Compliant" fill="#22c55e" radius={[0, 0, 0, 0]} /><Bar stackId="policy" dataKey="missing" name="Missing" fill="#475569" /><Bar stackId="policy" dataKey="nonCompliant" name="Non-compliant" fill="#ef2b32" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer></div>;
+}
+
+export function RuntimeRateChart({ hotels: runtimeHotels }: { hotels: ReconciledRuntimeHotel[] }) {
+  const data = runtimeHotels.filter((hotel) => Object.keys(hotel.rates).length).slice(0, 9).map((hotel) => ({ hotel: `${hotel.airport || "--"} / ${hotel.hotelName.slice(0, 12)}`, SharePoint: hotel.rates.SharePoint, Cvent: hotel.rates.Cvent, StormX: hotel.rates.StormX }));
+  return <div className="h-[300px] w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={data} margin={{ top: 12, right: 8, left: -18, bottom: 42 }}><CartesianGrid stroke="rgba(255,255,255,.05)" vertical={false} /><XAxis dataKey="hotel" tick={axis} axisLine={false} tickLine={false} angle={-22} textAnchor="end" interval={0} /><YAxis tick={axis} axisLine={false} tickLine={false} /><Tooltip contentStyle={tooltipStyle} /><Legend iconType="circle" wrapperStyle={{ fontSize: 10, color: "#94a3b8" }} /><Bar dataKey="SharePoint" fill="#ef2b32" radius={[5, 5, 0, 0]} /><Bar dataKey="Cvent" fill="#f59e0b" radius={[5, 5, 0, 0]} /><Bar dataKey="StormX" fill="#38bdf8" radius={[5, 5, 0, 0]} /></BarChart></ResponsiveContainer></div>;
 }

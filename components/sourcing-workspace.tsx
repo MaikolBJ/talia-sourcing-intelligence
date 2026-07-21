@@ -47,10 +47,11 @@ import {
   Zap,
 } from "lucide-react";
 import { hotels, initialActions, opportunities, pipelineData, sourceHealth } from "@/data/sourcing-data";
-import { LeverageScatterChart, NegotiationChart, PipelineChart, ProductionChart, RateComparisonChart, RegionalChart, SourceCoverageChart } from "@/components/charts";
+import { LeverageScatterChart, NegotiationChart, PipelineChart, ProductionChart, RateComparisonChart, RegionalChart, RuntimePolicyChart, RuntimeRateChart, RuntimeSourceChart, SourceCoverageChart } from "@/components/charts";
 import { Microsoft365Connector } from "@/components/microsoft-365-connector";
 import { Badge, Button, Eyebrow, Field, IconButton, Input, MetricCard, Modal, Notice, Progress, SectionHeading, Select, Surface, type Tone } from "@/components/ui";
 import { normalizeMatrix, parseCsvMatrix } from "@/integrations/normalization";
+import { reconcileRuntimeRecords } from "@/integrations/reconciliation";
 import { cn, csvEscape, formatMoney, formatNumber } from "@/lib/utils";
 import type { ActionItem, Microsoft365Snapshot, NormalizedSourceRecord, RiskLevel, SourceLinks, SourceName, SourcingHotel, UserRole } from "@/types/sourcing";
 
@@ -272,8 +273,41 @@ function CrossSourceExplorer({ onOpenHotel, runtimeRecords }: { onOpenHotel: (ho
 
 function RuntimeRecordsPanel({ records }: { records: NormalizedSourceRecord[] }) {
   const [query, setQuery] = useState("");
-  const filtered = records.filter((record) => `${record.hotelName} ${record.legalName} ${record.airport} ${record.sourceId}`.toLowerCase().includes(query.toLowerCase()));
-  return <Surface className="mt-5"><SectionHeading eyebrow="Authenticated and local runtime layer" title="Normalized source records" description="These rows are session-only and remain separate from the synthetic presentation dataset. Source and row provenance are preserved for every mapped field." action={<Badge tone="green">{filtered.length} runtime rows</Badge>} /><div className="mb-4 relative"><Search size={16} className="absolute left-3.5 top-3.5 text-slate-600" /><Input className="pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search live hotel, source ID or IATA..." /></div><div className="overflow-x-auto"><table className="data-table min-w-[980px]"><thead><tr>{["Source", "Property", "Market", "Commercial", "Policy evidence", "Status", "Trace"].map((item) => <th key={item}>{item}</th>)}</tr></thead><tbody>{filtered.slice(0, 100).map((record) => <tr key={`${record.source}-${record.sourceId}-${record.sourceRow}`}><td><Badge tone={record.source === "SharePoint" ? "red" : record.source === "Cvent" ? "amber" : "blue"}>{record.source}</Badge></td><td><strong>{record.hotelName || record.legalName || record.sourceId}</strong><span>{record.sourceId}</span></td><td><strong>{record.airport || "Missing IATA"}</strong><span>{[record.city, record.country].filter(Boolean).join(", ") || record.region || "Unmapped market"}</span></td><td><strong>{record.rate === null ? "Rate missing" : `${record.currency} ${record.rate.toFixed(2)}`}</strong><span>{record.roomNights === null ? "No production" : `${formatNumber(record.roomNights)} room nights`}</span></td><td><strong>{record.commission === null ? "Commission missing" : `${record.commission}% commission`}</strong><span>{[`Breakfast ${record.breakfast === null ? "?" : record.breakfast ? "Y" : "N"}`, `LRA ${record.lra === null ? "?" : record.lra ? "Y" : "N"}`, `VCC ${record.vcc === null ? "?" : record.vcc ? "Y" : "N"}`].join(" / ")}</span></td><td><Badge tone={/approved|accepted|active/i.test(record.status) ? "green" : "amber"}>{record.status || "Unmapped"}</Badge></td><td><strong>Row {record.sourceRow}</strong><span>{record.confidence}% identity</span></td></tr>)}</tbody></table></div>{filtered.length > 100 ? <p className="mt-3 text-xs text-slate-500">Showing the first 100 matching runtime rows.</p> : null}</Surface>;
+  const reconciled = reconcileRuntimeRecords(records);
+  const filtered = reconciled.filter((hotel) => `${hotel.hotelName} ${hotel.legalName} ${hotel.airport} ${hotel.city} ${hotel.country}`.toLowerCase().includes(query.toLowerCase()));
+  const threeSourceMatches = reconciled.filter((hotel) => hotel.sources.length === 3).length;
+  const urgentRisks = reconciled.filter((hotel) => hotel.risk === "Critical" || hotel.risk === "High").length;
+  const discrepancies = reconciled.filter((hotel) => hotel.discrepancyCount > 0).length;
+
+  return <div className="mt-5 grid gap-5">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <MetricCard label="Canonical hotels" value={formatNumber(reconciled.length)} detail={`${formatNumber(records.length)} normalized source rows`} tone="blue" />
+      <MetricCard label="Three-source matches" value={formatNumber(threeSourceMatches)} detail="SharePoint + Cvent + StormX evidence" tone="green" />
+      <MetricCard label="Urgent policy risks" value={formatNumber(urgentRisks)} detail="Critical or high sourcing intervention" tone={urgentRisks ? "red" : "green"} />
+      <MetricCard label="Source discrepancies" value={formatNumber(discrepancies)} detail="Rates, terms or status require review" tone={discrepancies ? "amber" : "green"} />
+    </div>
+    <div className="grid gap-5 xl:grid-cols-3">
+      <Surface><SectionHeading eyebrow="Runtime coverage" title="Rows by source" description="The active session only; no private rows are persisted." /><RuntimeSourceChart records={records} /></Surface>
+      <Surface><SectionHeading eyebrow="Policy evidence" title="Compliance and missing terms" description="10% commission, breakfast, LRA and VCC evidence." /><RuntimePolicyChart hotels={reconciled} /></Surface>
+      <Surface><SectionHeading eyebrow="Commercial comparison" title="Rates by canonical hotel" description="Side-by-side source rates expose negotiation gaps." /><RuntimeRateChart hotels={reconciled} /></Surface>
+    </div>
+    <Surface>
+      <SectionHeading eyebrow="Authenticated and local runtime layer" title="Reconciled sourcing decision records" description="Deterministic matching combines property ID, IATA and normalized hotel identity. Every result retains source-row provenance." action={<Badge tone="green">{filtered.length} canonical hotels</Badge>} />
+      <div className="mb-4 relative"><Search size={16} className="absolute left-3.5 top-3.5 text-slate-600" /><Input className="pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search live hotel, market or IATA..." /></div>
+      <div className="overflow-x-auto"><table className="data-table min-w-[1320px]"><thead><tr>{["Canonical hotel", "Sources", "Rate evidence", "Production", "Policy score", "Required terms", "Discrepancies", "Status / owner", "Trace"].map((item) => <th key={item}>{item}</th>)}</tr></thead><tbody>{filtered.slice(0, 100).map((hotel) => <tr key={hotel.key}>
+        <td><strong>{hotel.hotelName}</strong><span>{hotel.airport || "Missing IATA"} / {[hotel.city, hotel.country].filter(Boolean).join(", ") || hotel.region || "Unmapped market"}</span></td>
+        <td><div className="flex flex-wrap gap-1">{hotel.sources.map((source) => <Badge key={source} tone={source === "SharePoint" ? "red" : source === "Cvent" ? "amber" : "blue"}>{source}</Badge>)}</div></td>
+        <td><strong>{hotel.currency} {hotel.rates.SharePoint?.toFixed(2) ?? "--"} / {hotel.rates.Cvent?.toFixed(2) ?? "--"} / {hotel.rates.StormX?.toFixed(2) ?? "--"}</strong><span>SharePoint / Cvent / StormX</span></td>
+        <td><strong>{hotel.roomNights === null ? "Missing" : formatNumber(hotel.roomNights)}</strong><span>StormX-first room-night authority</span></td>
+        <td><strong>{hotel.complianceScore}% compliance</strong><span>{hotel.completenessScore}% term completeness</span></td>
+        <td><strong>{hotel.commission === null ? "Commission ?" : `${hotel.commission}% commission`}</strong><span>{[`Breakfast ${hotel.breakfast === null ? "?" : hotel.breakfast ? "Y" : "N"}`, `LRA ${hotel.lra === null ? "?" : hotel.lra ? "Y" : "N"}`, `VCC ${hotel.vcc === null ? "?" : hotel.vcc ? "Y" : "N"}`].join(" / ")}</span></td>
+        <td><Badge tone={hotel.discrepancyCount ? "amber" : "green"}>{hotel.discrepancyCount} conflicts</Badge><span>{hotel.matchConfidence}% identity confidence</span></td>
+        <td><Badge tone={riskTone(hotel.risk)}>{hotel.risk} risk</Badge><span>{hotel.status} / {hotel.owner}</span></td>
+        <td><strong>{hotel.sources.flatMap((source) => hotel.sourceRows[source]?.map((row) => `${source} ${row}`) ?? []).join(" / ")}</strong><span>Source row provenance</span></td>
+      </tr>)}</tbody></table></div>
+      {filtered.length > 100 ? <p className="mt-3 text-xs text-slate-500">Showing the first 100 matching canonical hotels.</p> : null}
+    </Surface>
+  </div>;
 }
 
 function ReportsWorkspace() {

@@ -138,6 +138,32 @@ export interface NormalizedSourceRecord {
   confidence: number;
 }
 
+export interface ReconciledRuntimeHotel {
+  key: string;
+  hotelName: string;
+  legalName: string;
+  airport: string;
+  city: string;
+  country: string;
+  region: string;
+  owner: string;
+  status: string;
+  sources: SourceName[];
+  sourceRows: Partial<Record<SourceName, number[]>>;
+  rates: Partial<Record<SourceName, number>>;
+  currency: string;
+  commission: number | null;
+  roomNights: number | null;
+  breakfast: boolean | null;
+  lra: boolean | null;
+  vcc: boolean | null;
+  complianceScore: number;
+  completenessScore: number;
+  matchConfidence: number;
+  discrepancyCount: number;
+  risk: RiskLevel;
+}
+
 export interface Microsoft365Snapshot {
   accountName: string;
   site: GraphSiteSummary;
