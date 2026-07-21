@@ -280,22 +280,22 @@ function RuntimeRecordsPanel({ records }: { records: NormalizedSourceRecord[] })
   const urgentRisks = reconciled.filter((hotel) => hotel.risk === "Critical" || hotel.risk === "High").length;
   const discrepancies = reconciled.filter((hotel) => hotel.discrepancyCount > 0).length;
 
-  return <div className="mt-5 grid gap-5">
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  return <div className="mt-5 grid min-w-0 max-w-full gap-5 overflow-hidden">
+    <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <MetricCard label="Canonical hotels" value={formatNumber(reconciled.length)} detail={`${formatNumber(records.length)} normalized source rows`} tone="blue" />
       <MetricCard label="Three-source matches" value={formatNumber(threeSourceMatches)} detail="SharePoint + Cvent + StormX evidence" tone="green" />
       <MetricCard label="Urgent policy risks" value={formatNumber(urgentRisks)} detail="Critical or high sourcing intervention" tone={urgentRisks ? "red" : "green"} />
       <MetricCard label="Source discrepancies" value={formatNumber(discrepancies)} detail="Rates, terms or status require review" tone={discrepancies ? "amber" : "green"} />
     </div>
-    <div className="grid gap-5 xl:grid-cols-3">
-      <Surface><SectionHeading eyebrow="Runtime coverage" title="Rows by source" description="The active session only; no private rows are persisted." /><RuntimeSourceChart records={records} /></Surface>
-      <Surface><SectionHeading eyebrow="Policy evidence" title="Compliance and missing terms" description="10% commission, breakfast, LRA and VCC evidence." /><RuntimePolicyChart hotels={reconciled} /></Surface>
-      <Surface><SectionHeading eyebrow="Commercial comparison" title="Rates by canonical hotel" description="Side-by-side source rates expose negotiation gaps." /><RuntimeRateChart hotels={reconciled} /></Surface>
+    <div className="grid min-w-0 gap-5 xl:grid-cols-3">
+      <Surface className="min-w-0 overflow-hidden"><SectionHeading eyebrow="Runtime coverage" title="Rows by source" description="The active session only; no private rows are persisted." /><RuntimeSourceChart records={records} /></Surface>
+      <Surface className="min-w-0 overflow-hidden"><SectionHeading eyebrow="Policy evidence" title="Compliance and missing terms" description="10% commission, breakfast, LRA and VCC evidence." /><RuntimePolicyChart hotels={reconciled} /></Surface>
+      <Surface className="min-w-0 overflow-hidden"><SectionHeading eyebrow="Commercial comparison" title="Rates by canonical hotel" description="Side-by-side source rates expose negotiation gaps." /><RuntimeRateChart hotels={reconciled} /></Surface>
     </div>
-    <Surface>
+    <Surface className="min-w-0 max-w-full overflow-hidden">
       <SectionHeading eyebrow="Authenticated and local runtime layer" title="Reconciled sourcing decision records" description="Deterministic matching combines property ID, IATA and normalized hotel identity. Every result retains source-row provenance." action={<Badge tone="green">{filtered.length} canonical hotels</Badge>} />
       <div className="mb-4 relative"><Search size={16} className="absolute left-3.5 top-3.5 text-slate-600" /><Input className="pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search live hotel, market or IATA..." /></div>
-      <div className="overflow-x-auto"><table className="data-table min-w-[1320px]"><thead><tr>{["Canonical hotel", "Sources", "Rate evidence", "Production", "Policy score", "Required terms", "Discrepancies", "Status / owner", "Trace"].map((item) => <th key={item}>{item}</th>)}</tr></thead><tbody>{filtered.slice(0, 100).map((hotel) => <tr key={hotel.key}>
+      <div className="max-w-full overflow-x-auto"><table className="data-table min-w-[1320px]"><thead><tr>{["Canonical hotel", "Sources", "Rate evidence", "Production", "Policy score", "Required terms", "Discrepancies", "Status / owner", "Trace"].map((item) => <th key={item}>{item}</th>)}</tr></thead><tbody>{filtered.slice(0, 100).map((hotel) => <tr key={hotel.key}>
         <td><strong>{hotel.hotelName}</strong><span>{hotel.airport || "Missing IATA"} / {[hotel.city, hotel.country].filter(Boolean).join(", ") || hotel.region || "Unmapped market"}</span></td>
         <td><div className="flex flex-wrap gap-1">{hotel.sources.map((source) => <Badge key={source} tone={source === "SharePoint" ? "red" : source === "Cvent" ? "amber" : "blue"}>{source}</Badge>)}</div></td>
         <td><strong>{hotel.currency} {hotel.rates.SharePoint?.toFixed(2) ?? "--"} / {hotel.rates.Cvent?.toFixed(2) ?? "--"} / {hotel.rates.StormX?.toFixed(2) ?? "--"}</strong><span>SharePoint / Cvent / StormX</span></td>
