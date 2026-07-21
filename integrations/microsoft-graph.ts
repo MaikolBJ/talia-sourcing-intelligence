@@ -40,9 +40,8 @@ async function getClient(config: Microsoft365Config) {
       authority: `https://login.microsoftonline.com/${config.tenantId.trim()}`,
       redirectUri: redirectUri(),
       postLogoutRedirectUri: redirectUri(),
-      navigateToLoginRequestUrl: false,
     },
-    cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false },
+    cache: { cacheLocation: "sessionStorage" },
   };
   client = new PublicClientApplication(msalConfig);
   clientKey = nextKey;
