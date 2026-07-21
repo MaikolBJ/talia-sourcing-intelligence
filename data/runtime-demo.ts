@@ -27,7 +27,7 @@ function record(source: SourceName, values: Partial<NormalizedSourceRecord>): No
 
 export const runtimeDemoRecords: NormalizedSourceRecord[] = [
   record("SharePoint", { sourceId: "SP-DEMO-01", rate: 104, commission: 10, breakfast: true, lra: true, vcc: true, sourceRow: 8 }),
-  record("Cvent", { sourceId: "CV-DEMO-01", hotelName: "Synthetic Hotel Santiago", rate: 116, commission: 8, breakfast: true, lra: true, vcc: true, sourceRow: 14 }),
+  record("Cvent", { sourceId: "CV-DEMO-01", hotelName: "Synthetic Airport Hotel Santiago", rate: 116, commission: 8, breakfast: true, lra: true, vcc: true, sourceRow: 14 }),
   record("StormX", { sourceId: "SX-DEMO-01", hotelName: "Synthetic Airport Hotel Santiago", rate: 97, roomNights: 2840, sourceRow: 31 }),
   record("SharePoint", { sourceId: "SP-DEMO-02", hotelName: "Sample Lima Gateway", legalName: "Sample Lima Gateway SAC", airport: "LIM", city: "Lima", country: "Peru", rate: 91, commission: 10, breakfast: false, lra: false, vcc: true, status: "Review", sourceRow: 19 }),
   record("Cvent", { sourceId: "CV-DEMO-02", hotelName: "Sample Gateway Lima Hotel", legalName: "Sample Lima Gateway SAC", airport: "LIM", city: "Lima", country: "Peru", rate: 99, commission: 10, breakfast: false, lra: false, vcc: true, status: "Submitted", sourceRow: 42 }),
