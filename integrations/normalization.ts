@@ -62,7 +62,7 @@ function booleanValue(row: unknown[], index: number) {
   return null;
 }
 
-export function normalizeMatrix(source: SourceName, matrix: Matrix): NormalizedSourceRecord[] {
+export function normalizeMatrix(source: SourceName, matrix: Matrix, sourceRowOffset = 0): NormalizedSourceRecord[] {
   if (!matrix.length) return [];
   const header = findHeaderRow(matrix);
   if (header.matches < 2) return [];
@@ -91,10 +91,27 @@ export function normalizeMatrix(source: SourceName, matrix: Matrix): NormalizedS
       breakfast: booleanValue(row, columns.breakfast),
       lra: booleanValue(row, columns.lra),
       vcc: booleanValue(row, columns.vcc),
-      sourceRow: header.index + offset + 2,
+      sourceRow: sourceRowOffset + header.index + offset + 2,
       confidence: availableKeys === 3 ? 98 : availableKeys === 2 ? 84 : 62,
     };
   }).filter((record) => record.hotelName || !record.sourceId.startsWith(`${source.toLowerCase()}-`));
+}
+
+function excelColumnIndex(column: string) {
+  return column.toUpperCase().split("").reduce((value, character) => value * 26 + character.charCodeAt(0) - 64, 0) - 1;
+}
+
+export function sliceMatrixByRange(matrix: Matrix, range: string) {
+  const match = range.trim().match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/i);
+  if (!match) return { matrix, rowOffset: 0 };
+  const startColumn = excelColumnIndex(match[1]);
+  const startRow = Math.max(0, Number(match[2]) - 1);
+  const endColumn = excelColumnIndex(match[3]);
+  const endRow = Math.max(startRow, Number(match[4]) - 1);
+  return {
+    matrix: matrix.slice(startRow, endRow + 1).map((row) => row.slice(startColumn, endColumn + 1)),
+    rowOffset: startRow,
+  };
 }
 
 export function parseCsvMatrix(input: string): string[][] {

@@ -7,6 +7,7 @@ Public-safe sourcing workspace for TA Connections. The application is an English
 - Microsoft Entra SPA authentication uses Authorization Code with PKCE through `@azure/msal-browser`.
 - Microsoft Graph access is delegated and read-only: `User.Read`, `Sites.Read.All`, and `Files.Read.All`.
 - SharePoint site discovery, document-library discovery, file search, and a controlled Excel worksheet range are supported.
+- Workbooks are downloaded with `Files.Read.All` and parsed locally; Talia does not request the `Files.ReadWrite` permission required by Microsoft Graph's Excel Range API.
 - Cvent and StormX CSV snapshots are parsed locally with quoted-field support and mapped into a shared canonical hotel record.
 - Live and imported records exist in runtime memory only. They are never written to GitHub Pages, browser local storage, or the repository.
 - The public presentation dataset is synthetic and is visually separated from authenticated runtime records.

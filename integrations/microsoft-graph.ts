@@ -4,7 +4,8 @@ import {
   type AccountInfo,
   type Configuration,
 } from "@azure/msal-browser";
-import { normalizeMatrix } from "@/integrations/normalization";
+import { readSheet } from "read-excel-file/browser";
+import { normalizeMatrix, sliceMatrixByRange } from "@/integrations/normalization";
 import type {
   GraphDriveSummary,
   GraphFileSummary,
@@ -78,8 +79,15 @@ async function graphGet<T>(path: string, accessToken: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function graphPath(value: string) {
-  return value.split("/").map((part) => encodeURIComponent(part)).join("/");
+async function graphGetBlob(path: string, accessToken: string) {
+  const response = await fetch(`${graphRoot}${path}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({})) as { error?: { message?: string } };
+    throw new Error(payload.error?.message || `Microsoft Graph returned ${response.status}.`);
+  }
+  return response.blob();
 }
 
 export async function readMicrosoft365Snapshot(config: Microsoft365Config): Promise<Microsoft365Snapshot> {
@@ -96,10 +104,10 @@ export async function readMicrosoft365Snapshot(config: Microsoft365Config): Prom
   let records: Microsoft365Snapshot["records"] = [];
 
   if (config.workbookItemId.trim() && config.worksheetName.trim()) {
-    const sheet = graphPath(config.worksheetName.trim());
-    const range = (config.workbookRange.trim() || "A1:Z250").replace(/'/g, "''");
-    const matrix = await graphGet<{ text?: string[][]; values?: unknown[][] }>(`/drives/${encodeURIComponent(selectedDrive.id)}/items/${encodeURIComponent(config.workbookItemId.trim())}/workbook/worksheets/${sheet}/range(address='${range}')?$select=text,values`, accessToken);
-    records = normalizeMatrix("SharePoint", matrix.text ?? matrix.values ?? []);
+    const workbook = await graphGetBlob(`/drives/${encodeURIComponent(selectedDrive.id)}/items/${encodeURIComponent(config.workbookItemId.trim())}/content`, accessToken);
+    const sheetRows = await readSheet(workbook, config.worksheetName.trim());
+    const bounded = sliceMatrixByRange(sheetRows, config.workbookRange.trim() || "A1:Z250");
+    records = normalizeMatrix("SharePoint", bounded.matrix, bounded.rowOffset);
   }
 
   return {
