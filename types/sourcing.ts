@@ -83,3 +83,69 @@ export interface SourceLinks {
   stormX: string;
   support: string;
 }
+
+export interface Microsoft365Config {
+  tenantId: string;
+  clientId: string;
+  sharePointHostname: string;
+  sitePath: string;
+  driveId: string;
+  workbookItemId: string;
+  worksheetName: string;
+  workbookRange: string;
+  searchTerm: string;
+}
+
+export interface GraphSiteSummary {
+  id: string;
+  displayName: string;
+  webUrl: string;
+}
+
+export interface GraphDriveSummary {
+  id: string;
+  name: string;
+  webUrl?: string;
+}
+
+export interface GraphFileSummary {
+  id: string;
+  name: string;
+  webUrl: string;
+  lastModifiedDateTime: string;
+  size: number;
+}
+
+export interface NormalizedSourceRecord {
+  source: SourceName;
+  sourceId: string;
+  hotelName: string;
+  legalName: string;
+  airport: string;
+  city: string;
+  country: string;
+  region: string;
+  owner: string;
+  status: string;
+  rate: number | null;
+  currency: string;
+  commission: number | null;
+  roomNights: number | null;
+  breakfast: boolean | null;
+  lra: boolean | null;
+  vcc: boolean | null;
+  sourceRow: number;
+  confidence: number;
+}
+
+export interface Microsoft365Snapshot {
+  accountName: string;
+  site: GraphSiteSummary;
+  drives: GraphDriveSummary[];
+  files: GraphFileSummary[];
+  selectedDriveId: string;
+  refreshedAt: string;
+  records: NormalizedSourceRecord[];
+  worksheet?: string;
+  range?: string;
+}
