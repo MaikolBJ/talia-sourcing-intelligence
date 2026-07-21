@@ -125,7 +125,7 @@ export function Microsoft365Connector({
       </div> : <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
         <div className="grid gap-3 sm:grid-cols-3">
           <ConnectorPrinciple icon={KeyRound} title="PKCE sign-in" detail="No browser client secret." />
-          <ConnectorPrinciple icon={ShieldCheck} title="Read only" detail="Sites.Read.All and Files.Read.All delegated scopes." />
+          <ConnectorPrinciple icon={ShieldCheck} title="Read only" detail="Delegated Sites.Read.All scope. No write permissions." />
           <ConnectorPrinciple icon={CloudDownload} title="Runtime only" detail="Live rows are never committed or persisted." />
         </div>
         <Button variant="primary" onClick={connectAndRefresh} disabled={!configured || state === "connecting"}>{state === "connecting" ? <LoaderCircle size={16} className="animate-spin" /> : <Link2 size={16} />}{state === "connecting" ? "Connecting" : "Connect Microsoft 365"}</Button>

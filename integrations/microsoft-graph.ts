@@ -15,7 +15,7 @@ import type {
 } from "@/types/sourcing";
 
 const graphRoot = "https://graph.microsoft.com/v1.0";
-const graphScopes = ["User.Read", "Sites.Read.All", "Files.Read.All"];
+const graphScopes = ["User.Read", "Sites.Read.All"];
 let client: PublicClientApplication | null = null;
 let clientKey = "";
 
@@ -79,13 +79,13 @@ async function graphGet<T>(path: string, accessToken: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function graphGetBlob(path: string, accessToken: string) {
-  const response = await fetch(`${graphRoot}${path}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+async function graphDownload(driveId: string, itemId: string, accessToken: string) {
+  const item = await graphGet<{ "@microsoft.graph.downloadUrl"?: string }>(`/drives/${encodeURIComponent(driveId)}/items/${encodeURIComponent(itemId)}?$select=id,@microsoft.graph.downloadUrl`, accessToken);
+  const downloadUrl = item["@microsoft.graph.downloadUrl"];
+  if (!downloadUrl) throw new Error("Microsoft Graph did not return a temporary workbook download URL.");
+  const response = await fetch(downloadUrl);
   if (!response.ok) {
-    const payload = await response.json().catch(() => ({})) as { error?: { message?: string } };
-    throw new Error(payload.error?.message || `Microsoft Graph returned ${response.status}.`);
+    throw new Error(`SharePoint workbook download returned ${response.status}.`);
   }
   return response.blob();
 }
@@ -104,7 +104,7 @@ export async function readMicrosoft365Snapshot(config: Microsoft365Config): Prom
   let records: Microsoft365Snapshot["records"] = [];
 
   if (config.workbookItemId.trim() && config.worksheetName.trim()) {
-    const workbook = await graphGetBlob(`/drives/${encodeURIComponent(selectedDrive.id)}/items/${encodeURIComponent(config.workbookItemId.trim())}/content`, accessToken);
+    const workbook = await graphDownload(selectedDrive.id, config.workbookItemId.trim(), accessToken);
     const sheetRows = await readSheet(workbook, config.worksheetName.trim());
     const bounded = sliceMatrixByRange(sheetRows, config.workbookRange.trim() || "A1:Z250");
     records = normalizeMatrix("SharePoint", bounded.matrix, bounded.rowOffset);
