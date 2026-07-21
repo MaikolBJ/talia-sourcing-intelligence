@@ -3,6 +3,7 @@ import test from "node:test";
 import { normalizeMatrix, parseCsvMatrix, sliceMatrixByRange } from "../integrations/normalization";
 import { reconcileRuntimeRecords } from "../integrations/reconciliation";
 import type { NormalizedSourceRecord, SourceName } from "../types/sourcing";
+import { runtimeDemoRecords } from "../data/runtime-demo";
 
 test("CSV parser preserves quoted commas and escaped quotes", () => {
   const rows = parseCsvMatrix('Hotel ID,Hotel Name,Notes\r\nCV-1,"Cloud Hotel, Airport","Said ""yes"""');
@@ -96,4 +97,12 @@ test("LRA rejection creates a critical sourcing risk", () => {
   const [hotel] = reconcileRuntimeRecords([record("SharePoint", { commission: 10, breakfast: true, lra: false, vcc: true })]);
   assert.equal(hotel.risk, "Critical");
   assert.equal(hotel.complianceScore, 75);
+});
+
+test("safe public preview produces three canonical hotels and all source combinations", () => {
+  const hotels = reconcileRuntimeRecords(runtimeDemoRecords);
+  assert.equal(hotels.length, 3);
+  assert.equal(hotels.filter((hotel) => hotel.sources.length === 3).length, 2);
+  assert.equal(hotels.filter((hotel) => hotel.risk === "Critical").length, 1);
+  assert.ok(hotels.every((hotel) => hotel.discrepancyCount > 0));
 });
