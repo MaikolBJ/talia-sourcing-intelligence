@@ -193,7 +193,87 @@ function HotelIntelligence({ onOpenHotel }: { onOpenHotel: (hotel: SourcingHotel
   return (
     <>
       <PageHero
-        eyebrow…4505 tokens truncated…lized portfolio impact" change="+18.4%" tone="green" /><MetricCard label="Average rate movement" value="-8.9%" detail="Original to latest response" change="2.1 pts" tone="green" /><MetricCard label="Awarded compliance" value="97%" detail="No blocking policy exceptions" change="+5 pts" tone="green" /><MetricCard label="Median cycle" value="18 days" detail="Invitation to award" change="-4 days" tone="blue" /></div><div className="mt-5 grid gap-5 xl:grid-cols-2"><Surface><SectionHeading eyebrow="Commercial leverage" title="Rate variance vs room-night production" description="High-volume hotels above benchmark belong in the top-right negotiation queue." /><LeverageScatterChart /></Surface><Surface><SectionHeading eyebrow="Regional health" title="Compliance by sourcing region" description="Policy adherence across the active hotel portfolio." /><RegionalChart /></Surface><Surface><SectionHeading eyebrow="Market view" title="Rate comparison by priority port" description="Proposed, benchmark and realized ADR values provide a common commercial baseline." /><RateComparisonChart /></Surface><Surface><SectionHeading eyebrow="Source reliability" title="Cross-source record coverage" description="Visibility into how many canonical hotels have all required source evidence." /><SourceCoverageChart /></Surface></div></>;
+        eyebrow="Canonical hotel master"
+        title="One hotel. Every sourcing signal."
+        description="Search the normalized portfolio and open a complete record with commercial, operational, compliance and source-level evidence."
+        actions={exportAction}
+      />
+      <Surface>
+        <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_220px_180px]">
+          <div className="relative">
+            <Search size={16} className="absolute left-3.5 top-3.5 text-slate-600" />
+            <Input className="pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search hotel, port, owner or city..." />
+          </div>
+          <Select value={region} onChange={(event) => setRegion(event.target.value)}>
+            <option>All regions</option>
+            {Array.from(new Set(hotels.map((item) => item.region))).map((item) => <option key={item}>{item}</option>)}
+          </Select>
+          <Select value={risk} onChange={(event) => setRisk(event.target.value)}>
+            <option>All risk</option>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+            <option>Critical</option>
+          </Select>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="data-table min-w-[1120px]">
+            <thead>
+              <tr>{["Hotel", "Port / Region", "Owner", "Status", "Rate vs benchmark", "Room nights", "Compliance", "Sources", "Risk", ""].map((item) => <th key={item}>{item}</th>)}</tr>
+            </thead>
+            <tbody>
+              {filtered.map((hotel) => {
+                const variance = ((hotel.currentRate - hotel.marketBenchmark) / hotel.marketBenchmark) * 100;
+                return (
+                  <tr key={hotel.id}>
+                    <td><button className="text-left" onClick={() => onOpenHotel(hotel)}><strong>{hotel.hotel}</strong><span>{hotel.id} / {hotel.city}</span></button></td>
+                    <td><strong>{hotel.airport}</strong><span>{hotel.region}</span></td>
+                    <td><span className="text-slate-300">{hotel.owner}</span></td>
+                    <td><Badge tone={statusTone(hotel.status)}>{hotel.status}</Badge></td>
+                    <td><strong>{formatMoney(hotel.currentRate)}</strong><span className={variance > 0 ? "text-red-300!" : "text-emerald-300!"}>{variance > 0 ? "+" : ""}{variance.toFixed(1)}%</span></td>
+                    <td><strong>{formatNumber(hotel.roomNights)}</strong><span>annual</span></td>
+                    <td><strong>{hotel.compliance}%</strong><Progress value={hotel.compliance} color={hotel.compliance >= 90 ? "green" : hotel.compliance >= 75 ? "amber" : "red"} /></td>
+                    <td><SourceDots hotel={hotel} /></td>
+                    <td><Badge tone={riskTone(hotel.risk)}>{hotel.risk}</Badge></td>
+                    <td><IconButton label={`Open ${hotel.hotel}`} onClick={() => onOpenHotel(hotel)}><ChevronRight size={16} /></IconButton></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {filtered.length === 0 ? <div className="py-16 text-center"><Search className="mx-auto text-slate-700" /><strong className="mt-4 block text-white">No hotels match this view</strong><p className="mt-2 text-sm text-slate-500">Clear one or more filters to restore the portfolio.</p></div> : null}
+      </Surface>
+    </>
+  );
+}
+
+function PipelineWorkspace({ onOpenHotel }: { onOpenHotel: (hotel: SourcingHotel) => void }) {
+  return <><PageHero eyebrow="RFP pipeline" title="Move every hotel with control." description="A sourcing-first pipeline with clear deadlines, owner accountability, compliance gates and formal outcomes." actions={<Button variant="primary"><Zap size={15} /> Create sourcing wave</Button>} /><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{pipelineData.map((item, index) => <MetricCard key={item.stage} label={item.stage} value={String(item.value)} detail={index === 0 ? "Hotels invited" : `${Math.round((item.value / pipelineData[index - 1].value) * 100)}% stage conversion`} change={index === 4 ? "22% awarded" : undefined} tone={index === 4 ? "green" : "neutral"} />)}</div><div className="mt-5 grid gap-5 xl:grid-cols-[.75fr_1.25fr]"><Surface><SectionHeading eyebrow="Cycle conversion" title="2026-2027 sourcing wave" description="Formal pipeline stages with no hidden email-only state." /><PipelineChart /></Surface><Surface><SectionHeading eyebrow="Active records" title="Deadline and gate control" description="Blocking terms stop an agreement before approval." /><div className="grid gap-2">{hotels.filter((item) => item.status !== "Approved").slice(0, 7).map((hotel) => { const blockers = [!hotel.lra && "LRA", hotel.commission < 10 && "Commission", !hotel.breakfast && "Breakfast", !hotel.staticRate && "Static rate", !hotel.vcc && "VCC"].filter(Boolean); return <button key={hotel.id} onClick={() => onOpenHotel(hotel)} className="row-card grid gap-3 rounded-2xl p-4 text-left md:grid-cols-[1.2fr_.65fr_.55fr_1fr_auto] md:items-center"><div><strong className="text-sm text-white">{hotel.hotel}</strong><p className="mt-1 text-xs text-slate-500">{hotel.airport} / {hotel.owner}</p></div><Badge tone={statusTone(hotel.status)}>{hotel.status}</Badge><span className="text-xs font-bold text-slate-300">Due {hotel.deadline}</span><div className="flex flex-wrap gap-1">{blockers.length ? blockers.map((item) => <Badge key={String(item)} tone="red">{String(item)}</Badge>) : <Badge tone="green">No blockers</Badge>}</div><ChevronRight size={16} className="text-slate-600" /></button>; })}</div></Surface></div></>;
+}
+
+function NegotiationWorkspace({ onOpenHotel }: { onOpenHotel: (hotel: SourcingHotel) => void }) {
+  const [hotelId, setHotelId] = useState("HTL-EZE-014");
+  const hotel = hotels.find((item) => item.id === hotelId) ?? hotels[0];
+  const lines = [
+    { field: "Room rate", original: formatMoney(hotel.cventRate), requested: formatMoney(hotel.marketBenchmark), response: formatMoney(hotel.currentRate), result: hotel.currentRate <= hotel.marketBenchmark ? "Accepted" : "Counter" },
+    { field: "Commission", original: `${hotel.commission}%`, requested: "10% minimum", response: `${hotel.commission}%`, result: hotel.commission >= 10 ? "Accepted" : "Blocking" },
+    { field: "Breakfast", original: hotel.breakfast ? "Included" : "Excluded", requested: "Included", response: hotel.breakfast ? "Included" : "Excluded", result: hotel.breakfast ? "Accepted" : "Blocking" },
+    { field: "Last room availability", original: hotel.lra ? "Accepted" : "Rejected", requested: "Required", response: hotel.lra ? "Accepted" : "Rejected", result: hotel.lra ? "Accepted" : "Blocking" },
+    { field: "Payment", original: hotel.vcc ? "VCC" : "Direct billing", requested: "VCC + direct billing", response: hotel.vcc ? "VCC accepted" : "VCC declined", result: hotel.vcc ? "Accepted" : "Blocking" },
+  ];
+  return <><PageHero eyebrow="Structured negotiations" title="Negotiate the term, not the email thread." description="Every round preserves original, requested and hotel response values with policy gates and evidence-based recommendations." actions={<><Select value={hotelId} onChange={(event) => setHotelId(event.target.value)} className="min-w-64 rounded-full">{hotels.filter((item) => item.status === "Negotiation" || item.status === "Review").map((item) => <option key={item.id} value={item.id}>{item.airport} / {item.hotel}</option>)}</Select><Button variant="primary"><Sparkles size={15} /> Build next counter</Button></>} /><div className="grid gap-5 xl:grid-cols-[1.08fr_.92fr]"><Surface><SectionHeading eyebrow="Round trajectory" title={`${hotel.airport} / ${hotel.hotel}`} description="Rate movement against the benchmark across five decision points." /><NegotiationChart /></Surface><Surface className="red-grid"><SectionHeading eyebrow="Talia recommendation" title="Hold the compliance line" description="The recommendation is generated from policy, source confidence, market benchmark and historic production." /><div className="grid gap-3 sm:grid-cols-3"><MetricCard label="Target rate" value={formatMoney(hotel.marketBenchmark)} detail="Market-aligned ceiling" /><MetricCard label="Annual volume" value={formatNumber(hotel.roomNights)} detail="StormX room nights" /><MetricCard label="Leverage score" value={`${hotel.commercialScore}/100`} detail="Commercial strength" /></div><Notice tone={hotel.risk === "Critical" || hotel.risk === "High" ? "danger" : "warning"} title={hotel.nextAction}>Use a two-year commitment and historic production as the trade. Do not concede on LRA, 10% commission, breakfast, static rates or VCC.</Notice><Button className="mt-4 w-full" onClick={() => onOpenHotel(hotel)}>Open full hotel evidence <ArrowRight size={15} /></Button></Surface></div><Surface className="mt-5"><SectionHeading eyebrow="Round comparison" title="Original / TA request / hotel response" description="Structured terms make commercial movement and unresolved policy gaps immediately visible." /><div className="overflow-x-auto"><table className="data-table min-w-[860px]"><thead><tr>{["Negotiated field", "Original", "TA requested", "Hotel response", "Outcome"].map((item) => <th key={item}>{item}</th>)}</tr></thead><tbody>{lines.map((line) => <tr key={line.field}><td><strong>{line.field}</strong></td><td><span className="text-slate-400">{line.original}</span></td><td><strong>{line.requested}</strong></td><td><span className="text-slate-200">{line.response}</span></td><td><Badge tone={line.result === "Accepted" ? "green" : line.result === "Blocking" ? "red" : "amber"}>{line.result}</Badge></td></tr>)}</tbody></table></div></Surface></>;
+}
+
+function CrossSourceExplorer({ onOpenHotel }: { onOpenHotel: (hotel: SourcingHotel) => void }) {
+  const [query, setQuery] = useState("");
+  const [match, setMatch] = useState("All matches");
+  const rows = hotels.filter((hotel) => `${hotel.hotel} ${hotel.airport} ${hotel.id}`.toLowerCase().includes(query.toLowerCase()) && (match === "All matches" || hotel.matchStatus === match));
+  return <><PageHero eyebrow="Cross-source explorer" title="Make every discrepancy explainable." description="Compare canonical SharePoint terms with Cvent proposal values and StormX production without losing field-level provenance." actions={<Button variant="primary" onClick={() => exportHotels(rows)}><Download size={15} /> Export reconciled view</Button>} /><div className="grid gap-5 xl:grid-cols-[.7fr_1.3fr]"><Surface><SectionHeading eyebrow="Match coverage" title="Canonical identity quality" description="Property ID, IATA port and normalized hotel name drive matching." /><SourceCoverageChart /><div className="grid grid-cols-3 gap-2">{[["Matched", 7, "green"], ["Review", 2, "amber"], ["Unmatched", 1, "red"]].map(([label, value, tone]) => <div key={String(label)} className="row-card rounded-xl p-3 text-center"><strong className="font-display text-2xl text-white">{String(value)}</strong><p className={`mt-1 text-[10px] font-bold uppercase tracking-wider ${tone === "green" ? "text-emerald-300" : tone === "amber" ? "text-amber-200" : "text-red-200"}`}>{String(label)}</p></div>)}</div></Surface><Surface><SectionHeading eyebrow="Rate variance" title="Proposed vs benchmark vs realized ADR" description="A red bar above benchmark highlights a renegotiation candidate; StormX ADR adds operational context." /><RateComparisonChart /></Surface></div><Surface className="mt-5"><div className="mb-5 grid gap-3 md:grid-cols-[1fr_220px]"><div className="relative"><Search size={16} className="absolute left-3.5 top-3.5 text-slate-600" /><Input className="pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search property ID, hotel or IATA..." /></div><Select value={match} onChange={(event) => setMatch(event.target.value)}><option>All matches</option><option>Matched</option><option>Review</option><option>Unmatched</option></Select></div><div className="overflow-x-auto"><table className="data-table min-w-[1220px]"><thead><tr>{["Canonical property", "Source identity", "SharePoint rate", "Cvent rate", "StormX ADR", "Benchmark", "Variance", "Confidence", "Updated", ""].map((item) => <th key={item}>{item}</th>)}</tr></thead><tbody>{rows.map((hotel) => { const variance = ((hotel.currentRate - hotel.marketBenchmark) / hotel.marketBenchmark) * 100; return <tr key={hotel.id}><td><button className="text-left" onClick={() => onOpenHotel(hotel)}><strong>{hotel.hotel}</strong><span>{hotel.id} / {hotel.airport}</span></button></td><td><SourceDots hotel={hotel} /></td><td><strong>{formatMoney(hotel.currentRate)}</strong><span>Contract master</span></td><td><strong>{formatMoney(hotel.cventRate)}</strong><span>Hotel proposal</span></td><td><strong>{hotel.stormXAdr ? formatMoney(hotel.stormXAdr) : "Missing"}</strong><span>Realized ADR</span></td><td><strong>{formatMoney(hotel.marketBenchmark)}</strong><span>Market model</span></td><td><Badge tone={variance > 8 ? "red" : variance > 0 ? "amber" : "green"}>{variance > 0 ? "+" : ""}{variance.toFixed(1)}%</Badge></td><td><strong>{hotel.matchConfidence}%</strong><span>{hotel.matchStatus}</span></td><td><span className="text-slate-400">{new Date(hotel.lastUpdated).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span></td><td><IconButton label={`Open ${hotel.hotel}`} onClick={() => onOpenHotel(hotel)}><ChevronRight size={16} /></IconButton></td></tr>; })}</tbody></table></div></Surface></>;
+}
+
+function ReportsWorkspace() {
+  return <><PageHero eyebrow="Portfolio analytics" title="Measure savings, compliance and sourcing leverage." description="Executive-ready reporting connects sourcing activity with proposal quality, policy outcomes and operational production." actions={<Button variant="primary" onClick={() => window.print()}><Download size={15} /> Print report</Button>} /><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><MetricCard label="Negotiated savings" value="$1.26M" detail="Annualized portfolio impact" change="+18.4%" tone="green" /><MetricCard label="Average rate movement" value="-8.9%" detail="Original to latest response" change="2.1 pts" tone="green" /><MetricCard label="Awarded compliance" value="97%" detail="No blocking policy exceptions" change="+5 pts" tone="green" /><MetricCard label="Median cycle" value="18 days" detail="Invitation to award" change="-4 days" tone="blue" /></div><div className="mt-5 grid gap-5 xl:grid-cols-2"><Surface><SectionHeading eyebrow="Commercial leverage" title="Rate variance vs room-night production" description="High-volume hotels above benchmark belong in the top-right negotiation queue." /><LeverageScatterChart /></Surface><Surface><SectionHeading eyebrow="Regional health" title="Compliance by sourcing region" description="Policy adherence across the active hotel portfolio." /><RegionalChart /></Surface><Surface><SectionHeading eyebrow="Market view" title="Rate comparison by priority port" description="Proposed, benchmark and realized ADR values provide a common commercial baseline." /><RateComparisonChart /></Surface><Surface><SectionHeading eyebrow="Source reliability" title="Cross-source record coverage" description="Visibility into how many canonical hotels have all required source evidence." /><SourceCoverageChart /></Surface></div></>;
 }
 
 function SourcesAdmin({ role, links, setLinks, refreshSources, refreshing, setNotice }: { role: UserRole; links: SourceLinks; setLinks: (links: SourceLinks) => void; refreshSources: () => void; refreshing: boolean; setNotice: (message: string) => void }) {
