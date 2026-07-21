@@ -112,7 +112,7 @@ export function Microsoft365Connector({
 
       {snapshot ? <div className="grid gap-4">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <ConnectorMetric label="Signed in as" value={snapshot.accountName} detail="Delegated user context" />
+          <ConnectorMetric label="Signed in as" value={snapshot.accountName} detail={`${snapshot.resolvedRole}${snapshot.accountRoles.length ? " / Entra app role" : " / safe default"}`} />
           <ConnectorMetric label="SharePoint site" value={snapshot.site.displayName} detail="Read-only site resolution" />
           <ConnectorMetric label="Libraries" value={String(snapshot.drives.length)} detail="Readable document libraries" />
           <ConnectorMetric label="Normalized rows" value={String(snapshot.records.length)} detail={snapshot.worksheet ? `${snapshot.worksheet} / ${snapshot.range}` : "Configure workbook preview"} />

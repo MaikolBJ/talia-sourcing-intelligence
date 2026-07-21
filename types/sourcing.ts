@@ -166,6 +166,8 @@ export interface ReconciledRuntimeHotel {
 
 export interface Microsoft365Snapshot {
   accountName: string;
+  accountRoles: string[];
+  resolvedRole: UserRole;
   site: GraphSiteSummary;
   drives: GraphDriveSummary[];
   files: GraphFileSummary[];

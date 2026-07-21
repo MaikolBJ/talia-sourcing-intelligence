@@ -148,7 +148,7 @@ export function SourcingWorkspace() {
     </aside>
 
     <div className="min-w-0">
-      <header className="sticky top-0 z-30 border-b border-white/[.06] bg-[#080c12]/84 px-4 py-3 backdrop-blur-2xl md:px-6 xl:px-8"><div className="mx-auto flex max-w-[1720px] items-center gap-3"><IconButton label="Open navigation" className="lg:hidden" onClick={() => setMobileOpen(true)}><Menu size={18} /></IconButton><div className="min-w-0 flex-1"><div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.14em] text-slate-600"><span>Sourcing workspace</span><ChevronRight size={11} /><span className="text-slate-400">{current.label}</span></div><h2 className="font-display truncate text-lg font-semibold tracking-[-.04em] text-white">{current.label}</h2></div>{links.support ? <Button variant="ghost" className="hidden md:inline-flex" onClick={() => window.open(links.support, "_blank", "noopener,noreferrer")}><ExternalLink size={15} /> Platform link</Button> : null}<IconButton label="Notifications"><Bell size={18} /><span className="absolute" /></IconButton><Select aria-label="Workspace role" className="hidden w-auto min-w-44 rounded-full xl:block" value={role} onChange={(event) => changeRole(event.target.value as UserRole)}><option>Sourcing Manager</option><option>Platform Admin</option></Select><span className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-red-300 to-red-700 text-xs font-black text-white">MB</span></div></header>
+      <header className="sticky top-0 z-30 border-b border-white/[.06] bg-[#080c12]/84 px-4 py-3 backdrop-blur-2xl md:px-6 xl:px-8"><div className="mx-auto flex max-w-[1720px] items-center gap-3"><IconButton label="Open navigation" className="lg:hidden" onClick={() => setMobileOpen(true)}><Menu size={18} /></IconButton><div className="min-w-0 flex-1"><div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.14em] text-slate-600"><span>Sourcing workspace</span><ChevronRight size={11} /><span className="text-slate-400">{current.label}</span></div><h2 className="font-display truncate text-lg font-semibold tracking-[-.04em] text-white">{current.label}</h2></div>{links.support ? <Button variant="ghost" className="hidden md:inline-flex" onClick={() => window.open(links.support, "_blank", "noopener,noreferrer")}><ExternalLink size={15} /> Platform link</Button> : null}<IconButton label="Notifications"><Bell size={18} /><span className="absolute" /></IconButton>{microsoftSnapshot ? <Badge tone="green" className="hidden xl:inline-flex">Entra role enforced</Badge> : null}<Select aria-label="Workspace role" className="hidden w-auto min-w-44 rounded-full xl:block" value={role} disabled={Boolean(microsoftSnapshot)} title={microsoftSnapshot ? "Workspace role is enforced by Microsoft Entra app roles." : "Demo role selector"} onChange={(event) => changeRole(event.target.value as UserRole)}><option>Sourcing Manager</option><option>Platform Admin</option></Select><span className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-red-300 to-red-700 text-xs font-black text-white">MB</span></div></header>
 
       <div className="border-b border-white/[.055] bg-red-500/[.035] px-4 py-2 text-center text-[11px] font-semibold text-slate-400"><Info size={13} className="mr-1.5 inline text-red-300" />{notice}</div>
       <main className="mx-auto max-w-[1720px] p-4 md:p-6 xl:p-8">
@@ -158,7 +158,15 @@ export function SourcingWorkspace() {
         {activeTab === "negotiations" ? <NegotiationWorkspace onOpenHotel={setSelectedHotel} /> : null}
         {activeTab === "explorer" ? <CrossSourceExplorer onOpenHotel={setSelectedHotel} runtimeRecords={[...(microsoftSnapshot?.records ?? []), ...Object.values(importedRecords).flat()]} /> : null}
         {activeTab === "reports" ? <ReportsWorkspace /> : null}
-        {activeTab === "sources" ? <SourcesAdmin role={role} links={links} setLinks={setLinks} snapshot={microsoftSnapshot} setSnapshot={(next) => { setMicrosoftSnapshot(next); if (next) setLastRefresh(`Live: ${new Date(next.refreshedAt).toLocaleTimeString("en-US")}`); }} importedRecords={importedRecords} setImportedRecords={setImportedRecords} setNotice={setNotice} /> : null}
+        {activeTab === "sources" ? <SourcesAdmin role={role} links={links} setLinks={setLinks} snapshot={microsoftSnapshot} setSnapshot={(next) => {
+          setMicrosoftSnapshot(next);
+          if (next) {
+            setRole(next.resolvedRole);
+            window.localStorage.setItem("talia-sourcing-role", next.resolvedRole);
+            setLastRefresh(`Live: ${new Date(next.refreshedAt).toLocaleTimeString("en-US")}`);
+            setNotice(`Microsoft 365 connected. Workspace access is enforced as ${next.resolvedRole}.`);
+          }
+        }} importedRecords={importedRecords} setImportedRecords={setImportedRecords} setNotice={setNotice} /> : null}
       </main>
     </div>
     <HotelDetail hotel={selectedHotel} onClose={() => setSelectedHotel(null)} />

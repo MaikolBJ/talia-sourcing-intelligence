@@ -5,6 +5,7 @@ import {
   type Configuration,
 } from "@azure/msal-browser";
 import { readSheet } from "read-excel-file/browser";
+import { resolveWorkspaceRole } from "@/integrations/access-control";
 import { normalizeMatrix, sliceMatrixByRange } from "@/integrations/normalization";
 import type {
   GraphDriveSummary,
@@ -110,8 +111,12 @@ export async function readMicrosoft365Snapshot(config: Microsoft365Config): Prom
     records = normalizeMatrix("SharePoint", bounded.matrix, bounded.rowOffset);
   }
 
+  const access = resolveWorkspaceRole(account.idTokenClaims);
+
   return {
     accountName: account.name || account.username,
+    accountRoles: access.roles,
+    resolvedRole: access.role,
     site,
     drives: driveResponse.value,
     files: fileResponse.value,

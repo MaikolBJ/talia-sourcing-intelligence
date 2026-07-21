@@ -17,9 +17,12 @@ Public-safe sourcing workspace for TA Connections. The application is an English
 1. Create a Microsoft Entra App Registration configured as a Single-page application.
 2. Add `https://maikolbj.github.io/talia-sourcing-intelligence/workspace/` as an SPA redirect URI.
 3. Grant delegated Microsoft Graph permissions `User.Read` and `Sites.Read.All`; apply tenant admin consent if required by policy.
-4. In Talia, switch to Platform Admin and save the tenant ID, SPA client ID, SharePoint hostname, and site path.
-5. Optionally set a Graph drive ID, workbook item ID, worksheet name, and a bounded range such as `A1:Z250`.
-6. Select **Connect Microsoft 365** and sign in with an account that already has access to the sourcing site.
+4. Define the Entra app roles `Talia.PlatformAdmin` and `Talia.SourcingManager`, then assign users or groups according to least privilege.
+5. In the public demo, switch to Platform Admin and save the tenant ID, SPA client ID, SharePoint hostname, and site path.
+6. Optionally set a Graph drive ID, workbook item ID, worksheet name, and a bounded range such as `A1:Z250`.
+7. Select **Connect Microsoft 365** and sign in with an account that already has access to the sourcing site.
+
+After sign-in, Talia resolves access from the Entra `roles` claim and locks the role selector for the connected session. `Talia.PlatformAdmin` grants Platform Admin; all other authenticated users, including users without an assigned app role, receive the safe Sourcing Manager default.
 
 ## Data safety
 

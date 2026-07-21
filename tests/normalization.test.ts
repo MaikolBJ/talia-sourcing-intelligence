@@ -1,9 +1,27 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { resolveWorkspaceRole } from "../integrations/access-control";
 import { normalizeMatrix, parseCsvMatrix, sliceMatrixByRange } from "../integrations/normalization";
 import { reconcileRuntimeRecords } from "../integrations/reconciliation";
 import type { NormalizedSourceRecord, SourceName } from "../types/sourcing";
 import { runtimeDemoRecords } from "../data/runtime-demo";
+
+test("Entra Platform Admin app role grants administrative access", () => {
+  const access = resolveWorkspaceRole({ roles: ["Talia.PlatformAdmin"] });
+  assert.equal(access.role, "Platform Admin");
+  assert.deepEqual(access.roles, ["Talia.PlatformAdmin"]);
+});
+
+test("Entra app role resolution is case-insensitive", () => {
+  const access = resolveWorkspaceRole({ roles: ["talia.platformadmin"] });
+  assert.equal(access.role, "Platform Admin");
+});
+
+test("unassigned or malformed Entra roles default to Sourcing Manager", () => {
+  assert.equal(resolveWorkspaceRole({ roles: ["Talia.SourcingManager"] }).role, "Sourcing Manager");
+  assert.equal(resolveWorkspaceRole({ roles: "Talia.PlatformAdmin" }).role, "Sourcing Manager");
+  assert.equal(resolveWorkspaceRole(null).role, "Sourcing Manager");
+});
 
 test("CSV parser preserves quoted commas and escaped quotes", () => {
   const rows = parseCsvMatrix('Hotel ID,Hotel Name,Notes\r\nCV-1,"Cloud Hotel, Airport","Said ""yes"""');
