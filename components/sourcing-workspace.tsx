@@ -66,6 +66,7 @@ const navigation: NavItem[] = [
 ];
 
 const defaultLinks: SourceLinks = { sharePoint: "", cvent: "", stormX: "", support: "" };
+const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 function riskTone(risk: RiskLevel): Tone {
   return risk === "Low" ? "green" : risk === "Medium" ? "amber" : "red";
@@ -130,7 +131,7 @@ export function SourcingWorkspace() {
     <button aria-label="Close navigation" className={cn("fixed inset-0 z-40 bg-black/65 backdrop-blur-sm lg:hidden", mobileOpen ? "block" : "hidden")} onClick={() => setMobileOpen(false)} />
     <aside className={cn("fixed inset-y-0 left-0 z-50 flex w-[292px] flex-col border-r border-white/[.07] bg-[#080c12]/97 p-4 backdrop-blur-2xl transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0", mobileOpen ? "translate-x-0" : "-translate-x-full")}>
       <div className="flex items-start justify-between gap-3 px-2 pt-2">
-        <button className="text-left" onClick={() => selectTab("overview")}><Image src="/ta-connections-logo.svg" alt="TA Connections" width={215} height={50} priority className="h-auto w-[190px]" /><Eyebrow>Sourcing intelligence</Eyebrow><h1 className="font-display mt-1 text-2xl font-semibold tracking-[-.055em] text-white">Talia</h1></button>
+        <button className="text-left" onClick={() => selectTab("overview")}><Image src={`${publicBasePath}/ta-connections-logo.svg`} alt="TA Connections" width={215} height={50} priority className="h-auto w-[190px]" /><Eyebrow>Sourcing intelligence</Eyebrow><h1 className="font-display mt-1 text-2xl font-semibold tracking-[-.055em] text-white">Talia</h1></button>
         <IconButton label="Close navigation" className="lg:hidden" onClick={() => setMobileOpen(false)}><X size={18} /></IconButton>
       </div>
 

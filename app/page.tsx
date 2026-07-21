@@ -12,6 +12,8 @@ const accessModes: Array<{ role: UserRole; title: string; detail: string; icon: 
   { role: "Platform Admin", title: "Platform administration", detail: "All sourcing views plus source links, mapping and refresh controls", icon: ShieldCheck },
 ];
 
+const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export default function AccessPage() {
   const router = useRouter();
   const [role, setRole] = useState<UserRole>("Sourcing Manager");
@@ -25,7 +27,7 @@ export default function AccessPage() {
     <div className="mx-auto grid min-h-[calc(100vh-3.5rem)] max-w-[1560px] overflow-hidden rounded-[36px] border border-white/[.08] bg-[#090d13]/92 shadow-[0_50px_140px_rgba(0,0,0,.55)] lg:grid-cols-[1.18fr_.82fr]">
       <section className="login-hero relative flex min-h-[560px] flex-col justify-between overflow-hidden p-7 sm:p-11 lg:p-14">
         <div className="relative z-10">
-          <Image src="/ta-connections-logo.svg" alt="TA Connections" width={290} height={70} priority className="h-auto w-[215px] sm:w-[265px]" />
+          <Image src={`${publicBasePath}/ta-connections-logo.svg`} alt="TA Connections" width={290} height={70} priority className="h-auto w-[215px] sm:w-[265px]" />
           <div className="mt-20 max-w-4xl lg:mt-28">
             <Eyebrow>Sourcing intelligence / public prototype</Eyebrow>
             <h1 className="font-display mt-5 max-w-[11ch] text-[clamp(3.4rem,7vw,7.5rem)] font-semibold leading-[.88] tracking-[-.075em] text-white">See the deal before you make it.</h1>

@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   images: { unoptimized: true },
   basePath: onGitHubPages ? `/${repository}` : "",
   assetPrefix: onGitHubPages ? `/${repository}/` : undefined,
+  env: {
+    NEXT_PUBLIC_BASE_PATH: onGitHubPages ? `/${repository}` : "",
+  },
   poweredByHeader: false,
 };
 
